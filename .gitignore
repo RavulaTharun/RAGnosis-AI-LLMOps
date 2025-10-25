@@ -1,0 +1,5 @@
+venv/
+logs/
+RAGnosis_AI.egg-info/
+.env
+commands.txt/

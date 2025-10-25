@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MedAI RAG — Clinical Assistant</title>
+
+  <!-- Tailwind (CDN for demo) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg-start: #f7fbff;
+      --bg-end: #eef7fb;
+      --primary: #0f766e;
+      --accent: #06b6d4;
+      --muted: #6b7280;
+      --glass: rgba(255,255,255,0.7);
+    }
+
+    html,body { height:100%; background: linear-gradient(180deg,var(--bg-start),var(--bg-end)); font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+    /* Main card */
+    .shell {
+      max-width:1100px;
+      margin:48px auto;
+      padding:28px;
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(246,250,252,0.85));
+      box-shadow: 0 10px 40px rgba(14,30,37,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+      border: 1px solid rgba(15,23,42,0.04);
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:24px;
+      align-items:start;
+    }
+
+    /* Left hero */
+    .hero-title { font-weight:700; letter-spacing:-0.02em; font-size:1.6rem; color:#05263a; }
+    .hero-sub { color:var(--muted); margin-top:6px; }
+
+    /* Right chat pane */
+    .chat-panel {
+      height:68vh;
+      display:flex;
+      flex-direction:column;
+      border-radius:12px;
+      padding:18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.55));
+      border: 1px solid rgba(15,23,42,0.03);
+      box-shadow: 0 8px 24px rgba(14,30,37,0.04);
+      overflow: hidden;
+    }
+
+    #chat-window {
+      flex:1;
+      overflow-y:auto;
+      padding-right:6px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    /* bubbles */
+    .bubble-ai {
+      align-self:flex-start;
+      max-width:78%;
+      background: linear-gradient(180deg,#ffffff,#fbfeff);
+      border-radius:14px;
+      padding:12px 14px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+      border: 1px solid rgba(15,23,42,0.03);
+      animation: popIn .18s ease;
+    }
+    .bubble-user {
+      align-self:flex-end;
+      max-width:78%;
+      background: linear-gradient(90deg,var(--primary),var(--accent));
+      color:white;
+      border-radius:14px;
+      padding:10px 14px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+      animation: popIn .18s ease;
+    }
+
+    @keyframes popIn {
+      from { transform: translateY(8px) scale(.995); opacity:0; } to { transform: translateY(0) scale(1); opacity:1; }
+    }
+
+    /* typing placeholder */
+    .typing {
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      background: #fff;
+      padding:8px 12px;
+      border-radius:12px;
+      border: 1px dashed rgba(15,23,42,0.06);
+    }
+    .typing-dot {
+      width:7px; height:7px; border-radius:999px; background:var(--muted); opacity:0.25; animation: dot 1s infinite;
+    }
+    .typing-dot:nth-child(2){ animation-delay:0.12s; }
+    .typing-dot:nth-child(3){ animation-delay:0.24s; }
+    @keyframes dot { 0%,80%,100% { opacity:0.25; transform: translateY(0);} 40% { opacity:1; transform: translateY(-4px);} }
+
+    /* form */
+    .chat-form { border-top:1px solid rgba(15,23,42,0.03); padding-top:14px; display:flex; gap:10px; align-items:center; }
+    .chat-input { flex:1; min-height:48px; padding:12px 14px; border-radius:12px; border:1px solid rgba(15,23,42,0.06); background:#fff; resize:none; box-shadow: 0 3px 12px rgba(15,23,42,0.02); }
+    .send-btn { background: linear-gradient(90deg,var(--accent),var(--primary)); color:white; padding:10px 16px; border-radius:12px; border:none; font-weight:600; }
+
+    /* small helpers */
+    .meta { color:var(--muted); font-size:0.92rem; }
+    .src-tag { font-size:0.78rem; color:var(--muted); margin-top:6px; }
+
+    /* responsive */
+    @media (max-width: 1024px) {
+      .shell { grid-template-columns: 1fr; padding:20px; }
+      .chat-panel { height:62vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Left hero/content -->
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,var(--accent),var(--primary));color:white;font-weight:700;">AI</div>
+        <div>
+          <div class="hero-title">MedAI RAG — Clinical Assistant</div>
+          <div class="hero-sub">Retrieval-augmented medical assistant (FAISS + Groq LLaMA3). Cite sources, short clinical replies.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+        <div class="glass" style="padding:12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.6);">
+          <div style="font-weight:600;color:#063f3a;">Data</div>
+          <div class="meta">Clinical guidelines, EHR snippets</div>
+        </div>
+        <div class="glass" style="padding:12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.6);">
+          <div style="font-weight:600;color:#063f3a;">Safety</div>
+          <div class="meta">Answer length guardrails, provenance</div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;color:var(--muted);line-height:1.5;">
+        <strong>UX notes:</strong> This page is progressive: if JavaScript is available you get a smooth typing animation and fast background submit; if JavaScript is disabled the form posts traditionally to your Flask endpoint and the server renders results.
+      </div>
+    </div>
+
+    <!-- Right chat -->
+    <section class="chat-panel" aria-labelledby="chat-heading">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <div style="font-weight:700;color:#05263a;">MedAI Chat</div>
+          <div class="meta">Clinical assistant — powered by retrieval + Groq LLaMA3</div>
+        </div>
+        <div class="meta">Mode: Retrieval + LLM</div>
+      </div>
+
+      <!-- chat window -->
+      <div id="chat-window" role="log" aria-live="polite">
+        <!-- Server-rendered messages will populate here via templating in Flask.
+             Example block if you use Jinja:
+             {% for msg in messages %}
+               (render bubbles)
+             {% endfor %}
+        -->
+        <!-- If you have server messages, let Flask fill this area. -->
+        {% for msg in messages %}
+          {% if msg.role == 'user' %}
+            <div class="bubble-user">{{ msg.content | nl2br }}</div>
+          {% else %}
+            <div>
+              <div class="bubble-ai">{{ msg.content | safe | nl2br }}</div>
+              {% if msg.source %}
+                <div class="src-tag">Source: {{ msg.source }}</div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- typing placeholder -->
+      <div id="typing" style="display:none;margin-top:6px;">
+        <div class="typing">
+          <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+        </div>
+      </div>
+
+      <!-- Error (server-side) -->
+      {% if error %}
+        <div style="margin-top:10px;color:#c92a2a;font-weight:600;">{{ error }}</div>
+      {% endif %}
+
+      <!-- submission: progressive enhancement -->
+      <form id="chat-form" method="POST" action="{{ url_for('index') }}" class="chat-form" aria-label="Send a question to MedAI">
+        <textarea id="prompt" name="prompt" class="chat-input" placeholder="Ask a medical question..." rows="1" required></textarea>
+        <button id="send" class="send-btn" type="submit" aria-label="Send question">Send</button>
+      </form>
+    </section>
+  </div>
+
+  <!-- JavaScript: intercept POST for a smooth UX, fallbacks to regular POST if error -->
+  <script>
+    (function () {
+      const form = document.getElementById('chat-form');
+      const prompt = document.getElementById('prompt');
+      const typing = document.getElementById('typing');
+      const chatWindow = document.getElementById('chat-window');
+
+      // Auto-resize textarea
+      function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = (el.scrollHeight) + 'px';
+      }
+      prompt.addEventListener('input', () => autoResize(prompt));
+      autoResize(prompt);
+
+      // Smooth scroll helper
+      function scrollToBottom() {
+        chatWindow.scrollTop = chatWindow.scrollHeight + 200;
+      }
+
+      // If JS available, intercept submit for better UX
+      form.addEventListener('submit', async function (e) {
+        // Let non-JS fallback operate if user holds shift or ctrl
+        if (e.shiftKey) return;
+
+        e.preventDefault();
+        const text = prompt.value.trim();
+        if (!text) return;
+
+        // append user bubble locally for instant feedback
+        const userBubble = document.createElement('div');
+        userBubble.className = 'bubble-user';
+        userBubble.textContent = text;
+        chatWindow.appendChild(userBubble);
+        scrollToBottom();
+        prompt.value = '';
+        autoResize(prompt);
+
+        // show typing indicator
+        typing.style.display = 'block';
+        scrollToBottom();
+
+        try {
+          // Post via fetch as application/x-www-form-urlencoded
+          const payload = new URLSearchParams({ prompt: text });
+
+          const resp = await fetch(window.location.pathname, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'text/html' },
+            body: payload.toString()
+          });
+
+          // The server will re-render the full page; to keep things simple we trigger a reload
+          // so server-rendered messages (and session state) appear correctly.
+          // We wait a moment to make the typing feel natural.
+          setTimeout(() => {
+            window.location.reload();
+          }, 600);
+
+        } catch (err) {
+          console.error('Chat submit failed', err);
+          // fallback: submit the form normally
+          form.submit();
+        } finally {
+          // keep typing visible until reload
+        }
+      });
+
+      // ensure keyboard accessibility: Enter sends (Shift+Enter for newline)
+      prompt.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
