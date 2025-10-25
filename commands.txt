@@ -50,6 +50,9 @@ Production level :
 5. follow other commands from the documentation.
 
 --- Git integration w/ jenkins.
-1. 
+1. follow the github commands
+
+---- Build,Scan,Push (Docker,Aquatrivy,AWS ECR)
+
 
 
