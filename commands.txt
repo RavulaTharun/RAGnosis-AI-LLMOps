@@ -31,11 +31,16 @@ Tag line : An End-to-End Medical RAG Chatbot for Intelligent Clinical Insights -
 Production level :
 
 --- code versioning and docker file.
-
+-- Code versioning.
 1. create git repo and create new file (.gitignore) file.
 2. git init
 3. git branch -M main
 4. git add .
-5. 
+5. git commit -m "commit"
+6. git push origin main
+
+-- docker file.
+1. create a docker file.
+2. 
 
 
