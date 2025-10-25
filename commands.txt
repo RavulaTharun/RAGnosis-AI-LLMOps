@@ -41,6 +41,15 @@ Production level :
 
 -- docker file.
 1. create a docker file.
-2. 
+
+--- FROM HERE CI/CD PIPELINE STARTS HERE: PRODUCTION LEVEL :
+1. Jenkins is the main CI/CD Tool for the project.
+2. create a (custom_jenkins) folder and and (Docker) file inside.
+3. cd custom_jenkins (new terminal) --> follow the documentation from here.
+4. docker build -t jenkins-dind . (the file in the git is deprecated, so make sure updatd one).
+5. follow other commands from the documentation.
+
+--- Git integration w/ jenkins.
+1. 
 
 
