@@ -41,25 +41,25 @@ pipeline {
             }
         }
 
-        //  stage('Deploy to AWS App Runner') {
-        //     steps {
-        //         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-token']]) {
-        //             script {
-        //                 def accountId = sh(script: "aws sts get-caller-identity --query Account --output text", returnStdout: true).trim()
-        //                 def ecrUrl = "${accountId}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_REPO}"
-        //                 def imageFullTag = "${ecrUrl}:${IMAGE_TAG}"
+         stage('Deploy to AWS App Runner') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-token']]) {
+                    script {
+                        def accountId = sh(script: "aws sts get-caller-identity --query Account --output text", returnStdout: true).trim()
+                        def ecrUrl = "${accountId}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_REPO}"
+                        def imageFullTag = "${ecrUrl}:${IMAGE_TAG}"
 
-        //                 echo "Triggering deployment to AWS App Runner..."
+                        echo "Triggering deployment to AWS App Runner..."
 
-        //                 sh """
-        //                 SERVICE_ARN=\$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceArn" --output text --region ${AWS_REGION})
-        //                 echo "Found App Runner Service ARN: \$SERVICE_ARN"
+                        sh """
+                        SERVICE_ARN=\$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceArn" --output text --region ${AWS_REGION})
+                        echo "Found App Runner Service ARN: \$SERVICE_ARN"
 
-        //                 aws apprunner start-deployment --service-arn \$SERVICE_ARN --region ${AWS_REGION}
-        //                 """
-        //             }
-        //         }
-        //     }
-        // }
+                        aws apprunner start-deployment --service-arn \$SERVICE_ARN --region ${AWS_REGION}
+                        """
+                    }
+                }
+            }
+        }
     }
 }
