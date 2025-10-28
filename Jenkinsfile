@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'eu-north-1'
-        ECR_REPO = 'ragnosis-ai'
+        AWS_REGION = 'us-east-1'
+        ECR_REPO = 'ragnosis-ai-llmops'
         IMAGE_TAG = 'latest'
         SERVICE_NAME = 'llmops-medical-service'
     }

@@ -23,3 +23,4 @@ VOLUME /var/lib/docker
 
 # Switch back to Jenkins user
 USER jenkins
+    
